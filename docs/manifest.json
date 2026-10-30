@@ -1,0 +1,16 @@
+{
+  "name": "Lumen Command",
+  "version": "2026.10.30-2055",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "firmware/lumen-command-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

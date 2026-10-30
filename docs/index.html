@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumen Command</title>
+<meta name="description" content="Lumen Command – WLAN-LED-Steuerung für ESP32 und WS2812B mit eigener Weboberfläche, 54 Effekten, Musik-Effekten und Türlicht. Direkt im Browser installieren.">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.4.0/dist/web/install-button.js?module"></script>
+<style>
+  :root {
+    --bg: #071118; --panel: #0d1c26; --panel-2: #122733; --line: #24404f;
+    --ink: #e6f4f6; --muted: #8fa9b3; --mint: #67ffe0; --blue: #8bb8ff; --gold: #e8bb7b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 80% -10%, #12324088, transparent), var(--bg);
+    color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--mint); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  header { position: sticky; top: 0; z-index: 5; background: #071118d9; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  header .wrap { display: flex; align-items: center; gap: 16px; min-height: 56px; flex-wrap: wrap; }
+  .brand { font-weight: 700; letter-spacing: .02em; color: var(--ink); text-decoration: none; }
+  .brand span { color: var(--mint); }
+  nav { display: flex; gap: 14px; margin-left: auto; flex-wrap: wrap; font-size: 14px; }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--ink); }
+
+  .hero { padding-top: 64px; padding-bottom: 40px; }
+  .hero h1 { font-size: clamp(34px, 7vw, 60px); line-height: 1.05; margin: 0 0 16px; }
+  .hero h1 span { background: linear-gradient(90deg, var(--mint), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lead { font-size: clamp(17px, 2.4vw, 20px); color: var(--muted); max-width: 680px; margin: 0 0 28px; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 12px;
+    font: 600 16px/1 inherit; text-decoration: none; cursor: pointer; border: 1px solid var(--line);
+    color: var(--ink); background: var(--panel-2);
+  }
+  .btn.primary { background: linear-gradient(135deg, var(--mint), var(--blue)); color: #04141a; border: 0; }
+  .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .en { margin-top: 18px; font-size: 14px; color: var(--muted); }
+
+  /* Lichtleiste: Illustration, kein Live-Bild. */
+  .strip { display: flex; gap: 6px; margin: 44px 0 0; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #050c11; overflow: hidden; }
+  .strip i { flex: 1; height: 14px; border-radius: 4px; background: #182a33; animation: glow 3.6s ease-in-out infinite; }
+  @keyframes glow {
+    0%, 100% { background: #182a33; box-shadow: none; }
+    35% { background: var(--gold); box-shadow: 0 0 14px var(--gold); }
+    60% { background: #7a5a2c; box-shadow: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .strip i { animation: none; background: #7a5a2c; } html { scroll-behavior: auto; } }
+
+  section { padding: 48px 0; border-top: 1px solid #13252f; }
+  h2 { font-size: clamp(24px, 4vw, 32px); margin: 0 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 28px; max-width: 720px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .card .ico { font-size: 22px; margin-bottom: 8px; display: block; }
+
+  .install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .install .box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .install ul, .install ol { margin: 0; padding-left: 20px; color: var(--muted); }
+  .install li { margin: 6px 0; }
+  .install li strong { color: var(--ink); }
+  .note { margin-top: 14px; padding: 12px 14px; border-left: 3px solid var(--gold); background: #1b1a12; border-radius: 6px; color: #e9dcc4; font-size: 14px; }
+  esp-web-install-button [slot="activate"] { margin: 6px 0 10px; }
+  .warn { color: var(--gold); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  td code, p code, li code { color: var(--mint); }
+  pre { background: #050c11; border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; font-size: 14px; }
+  .table-wrap { overflow-x: auto; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; gap: 12px 24px; flex-wrap: wrap; justify-content: space-between; }
+
+  @media (max-width: 760px) {
+    .install { grid-template-columns: 1fr; }
+    nav { margin-left: 0; width: 100%; padding-bottom: 8px; }
+    .hero { padding-top: 40px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#">Lumen <span>Command</span></a>
+    <nav aria-label="Seitenbereiche">
+      <a href="#funktionen">Funktionen</a>
+      <a href="#installieren">Installieren</a>
+      <a href="#anschluss">Anschluss</a>
+      <a href="#einrichten">Einrichten</a>
+      <a href="https://github.com/sammy1987xxxx-dotcom/lumen-command">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Dein LED-Streifen.<br><span>Dein Command Center.</span></h1>
+    <p class="lead">Lumen Command macht aus einem ESP32 und einem WS2812B-Streifen eine WLAN-Leuchte mit schöner
+      Weboberfläche, 54 Effekten, Musik-Effekten über Mikrofon und einem Türlicht, das dich beim Reinkommen begrüßt.
+      Kostenlos, quelloffen, ohne Programmieren.</p>
+    <div class="actions">
+      <a class="btn primary" href="#installieren">⚡ Jetzt installieren</a>
+      <a class="btn" href="https://github.com/sammy1987xxxx-dotcom/lumen-command">Code auf GitHub</a>
+    </div>
+    <p class="en" lang="en"><strong>English:</strong> Wi-Fi LED controller firmware for ESP32 + WS2812B with a clean web UI, 54 effects,
+      music-reactive modes and a door light. Install it right here in your browser – the interface is in German.</p>
+    <div class="strip" aria-hidden="true" id="strip"></div>
+  </div>
+
+  <section id="funktionen">
+    <div class="wrap">
+      <h2>Was kann Lumen Command?</h2>
+      <p class="sub">Alles läuft direkt auf dem ESP32 – keine App, keine Cloud, kein Konto.</p>
+      <div class="grid">
+        <div class="card"><span class="ico">🖥️</span><h3>Eigene Weboberfläche</h3><p>Dunkles „Command Center“-Design, bedienbar mit Handy und PC im Browser.</p></div>
+        <div class="card"><span class="ico">✨</span><h3>54 Effekte</h3><p>Von ruhiger Nachtglut und Goldschweif bis Polarlicht, Feuer und Plasma – jeder Effekt einstellbar.</p></div>
+        <div class="card"><span class="ico">🎵</span><h3>26 Musik-Effekte</h3><p>Mit einem günstigen KY-037-Mikrofon reagiert der Streifen im Takt auf Musik.</p></div>
+        <div class="card"><span class="ico">🚪</span><h3>Türlicht</h3><p>Geht die Tür auf, wacht der Streifen von der Tür aus auf – als Nachtlicht oder goldene Welle.</p></div>
+        <div class="card"><span class="ico">🎨</span><h3>LEDs einzeln malen</h3><p>Jede LED einzeln färben und mit „LED-Nr. zeigen“ Positionen am Streifen finden.</p></div>
+        <div class="card"><span class="ico">🔄</span><h3>Updates über WLAN</h3><p>Neue Versionen einfach auf der Webseite hochladen – Einstellungen bleiben erhalten.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="installieren">
+    <div class="wrap">
+      <h2>Im Browser installieren</h2>
+      <p class="sub">ESP32 per USB anstecken, auf „Installieren“ klicken, Port wählen – fertig. Keine Arduino IDE nötig.</p>
+      <div class="install">
+        <div class="box">
+          <esp-web-install-button manifest="manifest.json">
+            <button slot="activate" class="btn primary">⚡ Lumen Command installieren</button>
+            <p slot="unsupported" class="warn">Dein Browser unterstützt kein Web Serial. Bitte Chrome, Edge oder Opera
+              am PC oder Mac verwenden (nicht auf dem Handy).</p>
+            <p slot="not-allowed" class="warn">Die Installation braucht eine sichere Verbindung (https).</p>
+          </esp-web-install-button>
+          <p class="note">Bei der ersten Installation wird der ESP32 komplett gelöscht. Für Updates eines bereits
+            eingerichteten Geräts besser die Update-Datei über die Weboberfläche hochladen – dann bleiben WLAN und
+            Einstellungen erhalten: <a href="firmware/lumen-command-update.bin" download>lumen-command-update.bin</a></p>
+        </div>
+        <div class="box">
+          <ul>
+            <li><strong>Browser:</strong> Chrome, Edge oder Opera am Computer</li>
+            <li><strong>Board:</strong> klassischer ESP32 (z. B. ESP32 DevKit / ESP32-WROOM-32, 4 MB Flash)</li>
+            <li><strong>USB-Kabel mit Datenleitung</strong> – reine Ladekabel gehen nicht</li>
+            <li><strong>Kein Port sichtbar?</strong> USB-Treiber für den Chip auf dem Board installieren
+              (meist CP210x oder CH340)</li>
+            <li><strong>Hängt beim Verbinden?</strong> BOOT-Taste am ESP32 gedrückt halten, bis es losgeht</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="anschluss">
+    <div class="wrap">
+      <h2>Anschluss</h2>
+      <p class="sub">Masse (GND) von ESP32, Netzteil und Streifen immer verbinden. Lange Streifen zusätzlich in der Mitte und
+        am Ende mit 5 V einspeisen.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bauteil</th><th>Anschluss</th><th>ESP32</th></tr></thead>
+          <tbody>
+            <tr><td>LED-Streifen WS2812B</td><td>DIN (über 330 Ω)</td><td><code>GPIO 2</code></td></tr>
+            <tr><td>LED-Streifen</td><td>+5 V / GND</td><td>Netzteil 5 V; GND auch an ESP32-GND</td></tr>
+            <tr><td>Kondensator 1000 µF</td><td>zwischen +5 V und GND</td><td>am Streifen-Anfang</td></tr>
+            <tr><td>Mikrofon KY-037 <em>(optional)</em></td><td>AO</td><td><code>GPIO 35</code></td></tr>
+            <tr><td>Mikrofon KY-037</td><td>DO</td><td><code>GPIO 16</code></td></tr>
+            <tr><td>Mikrofon KY-037</td><td>VCC / GND</td><td>3,3 V / GND</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sub" style="margin-top:16px">Netzteil: etwa 0,05 A je LED bei voller Helligkeit, z. B. 300 LEDs → 5 V / 15 A.
+        Andere Pins? Siehe <a href="https://github.com/sammy1987xxxx-dotcom/lumen-command#eigene-anpassungen">Eigene Anpassungen</a>.</p>
+    </div>
+  </section>
+
+  <section id="einrichten">
+    <div class="wrap">
+      <h2>Einrichten in 2 Minuten</h2>
+      <div class="grid">
+        <div class="card"><span class="ico">1</span><h3>Hotspot</h3><p>Mit dem WLAN <code>LED-Controller-Setup</code> verbinden, Passwort <code>1234567890</code>.</p></div>
+        <div class="card"><span class="ico">2</span><h3>Anmelden</h3><p><code>http://192.168.4.1</code> öffnen, Benutzer <code>admin</code>, Passwort <code>1234567890</code>.</p></div>
+        <div class="card"><span class="ico">3</span><h3>WLAN eintragen</h3><p>Unter „WLAN Konfiguration“ dein Heim-WLAN speichern – der ESP32 startet neu.</p></div>
+        <div class="card"><span class="ico">4</span><h3>Loslegen</h3><p>Neue Adresse im Router suchen, eigenes Passwort setzen, LED-Anzahl einstellen – fertig.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tuerlicht">
+    <div class="wrap">
+      <h2>Türlicht</h2>
+      <p class="sub">Lumen Command hört im Heimnetz auf UDP-Port 4210. Eine kurze Meldung genügt – von einem eigenen
+        Türsensor, Home Assistant oder Node-RED. Die passende Türsteuerung wird später ebenfalls veröffentlicht.</p>
+      <pre><code>{"type":"door_light","state":"open"}
+{"type":"door_light","state":"closed"}</code></pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Lumen Command © Thomas Brants (Sammy) · <a href="https://github.com/sammy1987xxxx-dotcom/lumen-command/blob/main/LICENSE">GPLv3</a>
+      mit <a href="https://github.com/sammy1987xxxx-dotcom/lumen-command/blob/main/LIZENZ-ZUSATZ.md">Namenszusatz</a></span>
+    <span>Entwickelt mit KI-Unterstützung: ChatGPT / Codex, Jules, Claude Code · Idee ChatGPT-Effekt: Fiemin</span>
+  </div>
+</footer>
+
+<script>
+  // Lichtleiste der Startseite: Welle läuft wie das Türzeichen von der Mitte nach außen.
+  const strip = document.getElementById('strip');
+  const count = window.innerWidth < 600 ? 18 : 36;
+  for (let i = 0; i < count; i++) {
+    const led = document.createElement('i');
+    led.style.animationDelay = (Math.abs(i - (count - 1) / 2) * 0.09).toFixed(2) + 's';
+    strip.appendChild(led);
+  }
+</script>
+</body>
+</html>
