@@ -40,6 +40,16 @@
   .btn.primary { background: linear-gradient(135deg, var(--mint), var(--blue)); color: #04141a; border: 0; }
   .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   .en { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 40px; align-items: center; }
+  .demo { margin: 0; }
+  .demo video { display: block; width: 100%; aspect-ratio: 478 / 620; border-radius: 16px; border: 1px solid var(--line);
+    background: #000; box-shadow: 0 20px 60px #67ffe012; }
+  .demo figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .badge { display: inline-flex; gap: 8px; align-items: center; margin: 0 0 18px; padding: 6px 12px; border-radius: 999px;
+    border: 1px solid #5b4a2c; background: #1b1710; color: #e9dcc4; font-size: 13px; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; margin-top: 18px; }
+  .shots img { display: block; width: 100%; height: 260px; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); }
+  .note.risk { border-left-color: #ff8a65; background: #1f1311; color: #f3d2c8; margin: 0 0 14px; }
 
   /* Lichtleiste: Illustration, kein Live-Bild. */
   .strip { display: flex; gap: 6px; margin: 44px 0 0; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: #050c11; overflow: hidden; }
@@ -83,6 +93,8 @@
     .install { grid-template-columns: 1fr; }
     nav { margin-left: 0; width: 100%; padding-bottom: 8px; }
     .hero { padding-top: 40px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 28px; }
+    .demo { max-width: 340px; }
   }
 </style>
 </head>
@@ -102,6 +114,9 @@
 
 <main>
   <div class="wrap hero">
+   <div class="hero-grid">
+   <div>
+    <p class="badge">🛠️ Projekt im Aufbau – die Bilder zeigen meinen echten, noch nicht fertigen Aufbau</p>
     <h1>Dein LED-Streifen.<br><span>Dein Command Center.</span></h1>
     <p class="lead">Lumen Command macht aus einem ESP32 und einem WS2812B-Streifen eine WLAN-Leuchte mit schöner
       Weboberfläche, 54 Effekten, Musik-Effekten über Mikrofon und einem Türlicht, das dich beim Reinkommen begrüßt.
@@ -112,6 +127,13 @@
     </div>
     <p class="en" lang="en"><strong>English:</strong> Wi-Fi LED controller firmware for ESP32 + WS2812B with a clean web UI, 54 effects,
       music-reactive modes and a door light. Install it right here in your browser – the interface is in German.</p>
+   </div>
+    <figure class="demo">
+      <video src="media/tuerlicht.mp4" poster="media/tuerlicht-vorschau.jpg" autoplay muted loop playsinline preload="metadata"
+        aria-label="Video: Der LED-Schlauch an der Decke wechselt die Farben, die Tür geht auf und das Türlicht leuchtet"></video>
+      <figcaption>Echter Aufbau: Farbwechsel an der Decke, dann geht die Tür auf – das Türlicht springt an.</figcaption>
+    </figure>
+   </div>
     <div class="strip" aria-hidden="true" id="strip"></div>
   </div>
 
@@ -127,6 +149,10 @@
         <div class="card"><span class="ico">🎨</span><h3>LEDs einzeln malen</h3><p>Jede LED einzeln färben und mit „LED-Nr. zeigen“ Positionen am Streifen finden.</p></div>
         <div class="card"><span class="ico">🔄</span><h3>Updates über WLAN</h3><p>Neue Versionen einfach auf der Webseite hochladen – Einstellungen bleiben erhalten.</p></div>
       </div>
+      <div class="shots">
+        <img src="media/farbwechsel-standbild.jpg" alt="LED-Schlauch an der Decke in Pink und Violett" loading="lazy">
+        <img src="media/tuerlicht-vorschau.jpg" alt="Offene Tür mit grün leuchtendem Türlicht" loading="lazy">
+      </div>
     </div>
   </section>
 
@@ -136,6 +162,10 @@
       <p class="sub">ESP32 per USB anstecken, auf „Installieren“ klicken, Port wählen – fertig. Keine Arduino IDE nötig.</p>
       <div class="install">
         <div class="box">
+          <p class="note risk"><strong>⚠️ Noch nicht getestet:</strong> Der Browser-Installer ist neu und von mir noch nicht
+            mit einem echten ESP32 ausprobiert. Testen ist auf eigene Gefahr gern erlaubt – Rückmeldung bitte als
+            <a href="https://github.com/sammy1987xxxx-dotcom/lumen-command/issues">Issue</a>. Bewährter Weg bis dahin:
+            <a href="https://github.com/sammy1987xxxx-dotcom/lumen-command#1-firmware-aufspielen">Arduino IDE</a>.</p>
           <esp-web-install-button manifest="manifest.json">
             <button slot="activate" class="btn primary">⚡ Lumen Command installieren</button>
             <p slot="unsupported" class="warn">Dein Browser unterstützt kein Web Serial. Bitte Chrome, Edge oder Opera

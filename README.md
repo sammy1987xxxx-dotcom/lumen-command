@@ -2,6 +2,16 @@
 
 **WLAN-LED-Steuerung für ESP32 und WS2812B-Streifen – mit eigener Weboberfläche, 54 Effekten, Musik-Effekten über Mikrofon und Türlicht.**
 
+🌐 **Projektseite mit Video und Installer:** https://sammy1987xxxx-dotcom.github.io/lumen-command/
+
+<p>
+  <img src="docs/media/farbwechsel-standbild.jpg" alt="LED-Schlauch an der Decke in Pink und Violett" width="320">
+  <img src="docs/media/tuerlicht-vorschau.jpg" alt="Offene Tür mit grün leuchtendem Türlicht" width="320">
+</p>
+
+> 🛠️ **Projekt im Aufbau:** Lumen Command läuft bei mir täglich. Die Bilder zeigen meinen echten, noch nicht
+> fertig gebauten Aufbau.
+
 > ### In short (English)
 > Lumen Command is a firmware for the ESP32 that turns an addressable LED strip (WS2812B) into a Wi-Fi light
 > with a clean, dark “Command Center” web interface. It ships with 54 effects, 26 of them music-reactive via a
@@ -24,7 +34,8 @@
 - **Updates über WLAN** (OTA) direkt auf der Webseite
 - **Schonender Betrieb**: Die Ausgangshelligkeit ist begrenzt, alle Einstellungen bleiben nach einem Neustart erhalten
 
-> 📸 *Bilder und ein kurzes Video folgen.*
+> 🎬 Ein kurzes Video (Farbwechsel, Tür geht auf, Türlicht springt an) gibt es auf der
+> [Projektseite](https://sammy1987xxxx-dotcom.github.io/lumen-command/).
 
 ## Was du brauchst
 
@@ -63,6 +74,11 @@
 ### 1. Firmware aufspielen
 
 **Variante A – im Browser (am einfachsten):**
+
+> ⚠️ **Noch nicht getestet:** Der Browser-Installer ist neu und von mir noch nicht mit einem echten ESP32
+> ausprobiert. Testen ist auf eigene Gefahr gern erlaubt – Rückmeldung bitte als Issue. Bewährt ist bis dahin
+> Variante B (Arduino IDE).
+
 Auf der **[Projektseite](https://sammy1987xxxx-dotcom.github.io/lumen-command/)** den ESP32 per USB anstecken, in Chrome,
 Edge oder Opera am Computer auf **„Lumen Command installieren“** klicken, Port wählen – fertig.
 Für spätere Updates die Datei `docs/firmware/lumen-command-update.bin` über die Weboberfläche hochladen.
