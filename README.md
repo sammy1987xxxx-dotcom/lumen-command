@@ -1,6 +1,6 @@
 # Lumen Command
 
-**WLAN-LED-Steuerung für ESP32 und WS2812B-Streifen – mit eigener Weboberfläche, 54 Effekten, Musik-Effekten über Mikrofon und Türlicht.**
+**WLAN-LED-Steuerung für ESP32 und WS2812B-Streifen – mit eigener Weboberfläche, 62 Effekten, Musik-Effekten über Mikrofon und Türlicht.**
 
 🌐 **Projektseite mit Video und Installer:** https://sammy1987xxxx-dotcom.github.io/lumen-command/
 
@@ -14,7 +14,7 @@
 
 > ### In short (English)
 > Lumen Command is a firmware for the ESP32 that turns an addressable LED strip (WS2812B) into a Wi-Fi light
-> with a clean, dark “Command Center” web interface. It ships with 54 effects, 26 of them music-reactive via a
+> with a clean, dark “Command Center” web interface. It ships with 62 effects, 31 of them music-reactive via a
 > cheap microphone module, a per-LED painting grid, over-the-air updates and a door light that starts glowing
 > from the door when a door sensor reports “open”.
 > **The web interface and this guide are in German.** The setup is simple: flash, join the hotspot
@@ -26,7 +26,7 @@
 ## Was kann Lumen Command?
 
 - **Eigene Weboberfläche** im dunklen „Command Center“-Design – einfach im Browser von Handy oder PC bedienen, keine App nötig
-- **54 Effekte**: ruhige Szenen (Nachtglut, Goldschweif, Polarlicht …), lebhafte Effekte und **26 Musik-Effekte**, die über ein Mikrofon im Takt reagieren
+- **62 Effekte**: ruhige Szenen (Nachtglut, Goldschweif, Polarlicht …), lebhafte Effekte und **31 Musik-Effekte**, die über ein Mikrofon im Takt reagieren
 - **Feste Farbe, Helligkeit und „Alles AUS“** mit einem Klick
 - **Einzel-LEDs malen** und „LED-Nr. zeigen“, um Positionen am Streifen zu finden
 - **Türlicht**: Meldet eine Tür „offen“, wacht der Streifen von der Tür aus auf (bei „Alles AUS“ als warmes Nachtlicht, sonst als goldene Begrüßungswelle über dem laufenden Effekt). Türbereich, Helligkeiten und Ein/Aus stellst du auf der Webseite ein.

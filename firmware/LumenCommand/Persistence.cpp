@@ -2,6 +2,7 @@
 #include "Globals.h"
 #include "Audio.h"
 #include "Effects.h"
+#include "LedSlots.h"
 #include <Preferences.h>
 
 Preferences preferences;
@@ -447,4 +448,34 @@ void loadSettings() {
 
   preferences.end();
   Serial.println("Einstellungen geladen (Cached Init).");
+  loadLedSlots();
+}
+
+// Bilderlicht: eigener Namensraum, je Platz ein Blob mit den Farben (3 Byte je LED).
+static void slotKey(char (&key)[8], uint8_t slot) { snprintf(key, sizeof key, "slot%u", unsigned(slot) + 1); }
+
+void loadLedSlots() {
+  Preferences slots;
+  if (!slots.begin("led-slots", true)) return;  // noch nie gespeichert
+  for (uint8_t s = 0; s < LED_SLOT_COUNT; ++s) {
+    char key[8];
+    slotKey(key, s);
+    const size_t bytes = slots.getBytesLength(key);
+    const size_t count = bytes / sizeof(CRGB);
+    if (!count || count > MAX_LEDS || bytes % sizeof(CRGB)) continue;
+    if (slots.getBytes(key, ledSlots[s].colors, bytes) == bytes) ledSlots[s].count = count;
+  }
+  slots.end();
+}
+
+bool storeLedSlot(uint8_t slot) {
+  if (slot >= LED_SLOT_COUNT) return false;
+  Preferences slots;
+  if (!slots.begin("led-slots", false)) return false;
+  char key[8];
+  slotKey(key, slot);
+  const size_t bytes = size_t(ledSlots[slot].count) * sizeof(CRGB);
+  const bool stored = slots.putBytes(key, ledSlots[slot].colors, bytes) == bytes;
+  slots.end();
+  return stored;
 }

@@ -5,6 +5,7 @@
 #include "Persistence.h"
 #include "WebSeite.h"
 #include "DeviceAccess.h"
+#include "LedSlots.h"
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
@@ -52,6 +53,9 @@ void handleStatus() {
     json["doorFirst"] = door_light::doorRange().first + 1;  // 1-basiert wie die Webseite
     json["doorLast"] = door_light::doorRange().last + 1;
     json["solidColor"] = (uint32_t)currentColor;
+    // Bilderlicht 1-3: gespeicherte LED-Anzahl je Platz, 0 = leer.
+    JsonArray slots = json["ledSlots"].to<JsonArray>();
+    for (uint8_t s = 0; s < LED_SLOT_COUNT; ++s) slots.add(ledSlots[s].count);
     json["rainbowSpeed"] = rainbowSpeed;
     json["rainbowGap"] = rainbowGap;
     json["cylonSpeed"] = cylonSpeed;
@@ -130,6 +134,7 @@ void handleStatus() {
 void handleEffect() {
   if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
     if (server.hasArg("id")) currentEffect = server.arg("id").toInt();
+    ledsPainted = false;
     saveSettings();
     xSemaphoreGive(xMutex);
   }
@@ -154,6 +159,7 @@ void handleToggleParam() {
 void handleSetAll() {
   if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
     currentEffect = 0;
+    ledsPainted = false;
     if (server.hasArg("color")) {
       String hexColor = server.arg("color");
       long number = strtol(hexColor.c_str(), NULL, 16);
@@ -169,13 +175,20 @@ void handleSetAll() {
 void handleSetSingle() {
   if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
     currentEffect = 0;
-    if (server.hasArg("index") && server.hasArg("color")) {
-      int index = server.arg("index").toInt();
-      String hexColor = server.arg("color");
-      long number = strtol(hexColor.c_str(), NULL, 16);
-      if (index >= 0 && index < numLeds) {
-        leds[index] = (CRGB)number;
+    ledsPainted = true;
+    if (server.hasArg("color")) {
+      long first = -1, last = -1;
+      if (server.hasArg("index")) first = last = server.arg("index").toInt();
+      // Bereich zum Malen (Bilderlicht): 0-basiert, beide Grenzen eingeschlossen, vertauscht erlaubt.
+      if (server.hasArg("from") && server.hasArg("to")) {
+        first = server.arg("from").toInt();
+        last = server.arg("to").toInt();
+        if (first > last) { const long swap = first; first = last; last = swap; }
       }
+      const CRGB color = (CRGB)strtol(server.arg("color").c_str(), NULL, 16);
+      if (first < 0) first = 0;
+      if (last > long(numLeds) - 1) last = long(numLeds) - 1;
+      for (long i = first; i <= last; ++i) leds[i] = color;
     }
     saveSettings();
     xSemaphoreGive(xMutex);
@@ -195,6 +208,7 @@ void handleShowLed() {
   if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
     if (index >= 0 && index < numLeds) {
       currentEffect = 0;
+      ledsPainted = false;
       fill_solid(leds, numLeds, CRGB::Black);
       leds[index] = CRGB::White;
       shown = true;
@@ -204,12 +218,49 @@ void handleShowLed() {
   server.send(shown ? 200 : 400, "text/plain", shown ? "OK" : "index ausserhalb");
 }
 
+// Bilderlicht: das aktuelle Bild (gemalte LEDs) auf Platz 1-3 sichern und den Platz einschalten.
+void handleSaveSlot() {
+  const long slot = server.hasArg("slot") ? server.arg("slot").toInt() : 0;
+  if (slot < 1 || slot > LED_SLOT_COUNT) {
+    server.send(400, "text/plain", "slot 1-3");
+    return;
+  }
+  LedSlot &target = ledSlots[slot - 1];
+  if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
+    target.count = numLeds > MAX_LEDS ? MAX_LEDS : numLeds;
+    for (uint16_t i = 0; i < target.count; ++i) target.colors[i] = leds[i];
+    currentEffect = LED_SLOT_FIRST_EFFECT + slot - 1;
+    ledsPainted = false;
+    saveSettings();
+    xSemaphoreGive(xMutex);
+  }
+  // Flash-Schreiben außerhalb der Sperre, damit die Ausgabe nicht stockt; nur dieser Task schreibt Plätze.
+  const bool stored = storeLedSlot(slot - 1);
+  server.send(stored ? 200 : 500, "text/plain", stored ? "OK" : "Speichern fehlgeschlagen");
+}
+
+// Gespeicherte Farben eines Platzes als Hex-Folge (6 Zeichen je LED) für das Raster der Webseite.
+void handleSlotColors() {
+  const long slot = server.hasArg("slot") ? server.arg("slot").toInt() : 0;
+  if (slot < 1 || slot > LED_SLOT_COUNT) {
+    server.send(400, "text/plain", "slot 1-3");
+    return;
+  }
+  static char text[MAX_LEDS * 6 + 1];
+  const LedSlot &source = ledSlots[slot - 1];
+  for (uint16_t i = 0; i < source.count; ++i)
+    snprintf(text + i * 6, 7, "%02X%02X%02X", source.colors[i].r, source.colors[i].g, source.colors[i].b);
+  text[source.count * 6] = 0;
+  server.send(200, "text/plain", text);
+}
+
 void handleSettings() {
   if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
     if (server.hasArg("brightness")) {
       brightness = constrain(server.arg("brightness").toInt(), 0L, 255L);
       FastLED.setBrightness(limitLedOutput(brightness));
-      if (currentEffect == 0) {
+      // Gemalte LEDs (Bilderlicht vor dem Speichern) nicht mit der festen Farbe überschreiben.
+      if (currentEffect == 0 && !ledsPainted) {
         fill_solid(leds, numLeds, currentColor);
       }
     }
@@ -539,6 +590,8 @@ void setupNetwork() {
   server.on("/params", handleParams);
   server.on("/setled", handleSetSingle);
   server.on("/showled", handleShowLed);
+  server.on("/saveslot", handleSaveSlot);
+  server.on("/slotcolors", handleSlotColors);
   server.on("/wifi-settings", HTTP_POST, handleWifiSettings);
 
   server.on("/update", HTTP_GET, []() {

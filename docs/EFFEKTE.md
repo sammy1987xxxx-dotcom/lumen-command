@@ -1,3 +1,61 @@
+## Nachtmusik: Nachtblüte (63), Klangpolarlicht (64), Lichttanz (65), 02.11.2026
+
+Drei Musik-Effekte von Claude Opus 5.5 (Anthropic), `MusicScenes.h`, nur LED-Webseite und Android-App. Sie leuchten
+**nur mit Musik**: bei Stille exakt dunkel (kein Grundglimmen), auch bei einzelnen Rauschspitzen des Mikrofons;
+nach der Musik gehen sie von selbst aus. Keine Einstellregler; Helligkeit folgt dem Regler.
+
+| ID | Name | Verhalten |
+|---|---|---|
+| 63 | Nachtblüte (A, ruhig) | Eine Blüte öffnet sich mit dem Klang aus der Mitte (Gold innen, Rose, Flieder außen); lautere Musik öffnet weiter (im Test 58/114/144 von 144 LEDs bei Pegel 60/130/220). Blütenringe ziehen mit der Musik langsam nach außen, ein Beat lässt sie weich aufblühen (0,25 s an, 0,8 s ab, bis +16 %). Schließt sich nach der Musik in etwa 7 s. |
+| 64 | Klangpolarlicht (A, ruhig) | Drei Lichtvorhänge wie beim Polarlicht (grün, türkis, violett), die nur mit Musik leuchten; jeder folgt der Lautstärke verschieden träge (0,15 / 0,3 / 0,8 s Anstieg), mit Musik ziehen sie schneller. Beats lassen die Strahlen weich heller schimmern. Erlischt nach der Musik in etwa 7 s. |
+| 65 | Lichttanz (A, lebhaft) | Fünf farbige Lichtkugeln; jeder Beat stößt zwei davon in Laufrichtung an (abwechselnd), kurzer weißer Aufblitzer. Sie prallen an den Enden ab, werden gebremst (höchstens 0,6 Streifenlängen/s) und leuchten mit der Lautstärke; die Farben wandern mit der Musik in 40 s durch den Farbkreis. Aus nach knapp 1 s Stille. |
+
+Gegen Rauschen: Schwellen auf dem geglätteten Pegel (8–12, Lichttanz 16); im Test bleiben Ausschläge bis 30 alle
+1,5 s dunkel. Wie empfindlich das am echten Mikrofon ist, hängt vom Regler „Empfindlichkeit“ ab und ist offen.
+
+Prüfung: `tools/test_music_scenes.py` (0..600 LEDs, Ränder, millis()-Überlauf, exakt dunkel bei Stille und
+Rauschspitzen, hell mit Musik, weich bei 63/64 (größter Bildsprung 23/22), wieder dunkel nach der Musik, Öffnen
+nach Lautstärke, Bewegung, Dispatcher) schreibt Zeit-Ort-Vorschauen nach `Temp/Led-Nachtmusik-PC/`. Nur PC.
+
+## Bilderlicht 1–3 (60–62), 02.11.2026
+
+Zum gezielten Beleuchten, z. B. von Bildern über dem Schlauch. In der LED-Webseite unter „Einzel-LED Steuerung“:
+„Malfarbe“ wählen, LEDs im Raster anklicken oder „Bereich färben“ (Nummern wie im Raster, von–bis), „Alle schwarz“
+zum Neuanfangen. „Speichern“ bei Bilderlicht 1, 2 oder 3 merkt sich alle LED-Farben dauerhaft (auch nach Neustart)
+und schaltet den Platz ein; ein belegter Platz fragt vor dem Überschreiben. Beim Aufrufen leuchten nur die gemalten
+LEDs, alle anderen sind aus; der Helligkeitsregler und Türzeichen wirken wie bei Effekten. Zum Ändern den Platz
+aufrufen (das Raster zeigt seine Farben), nachmalen, wieder speichern. Die Android-App ruft die Plätze als
+„Bilderlicht 1–3“ auf.
+
+Gespeichert wird je Platz die LED-Anzahl zum Zeitpunkt des Speicherns; wird der Schlauch später länger, bleiben
+die zusätzlichen LEDs aus. Drei Plätze mit 600 LEDs belegen etwa 5,4 KB des 20-KB-NVS. Seit dieser Änderung
+überschreibt der Helligkeitsregler gemalte (noch nicht gespeicherte) LEDs nicht mehr mit der festen Farbe, und das
+Türlicht von „Alles AUS“ übernimmt während des Malens nicht. „LED-Nr. zeigen“ löscht Gemaltes weiterhin.
+
+Prüfung: `tools/test_led_web.js` (Bereich, Speichern/Überschreiben, Aufrufen, Raster) und `tools/test_calm_effects.py`
+(Dispatcher: Farben, Rest aus, leerer Platz). Nur PC; nicht gebaut, kein Gerätetest, NVS-Schreiben nicht geprüft.
+
+## Ruhe und Schlaf: Atemfluss (55), Klangschale (56), Mondsee (57), Einschlafen (58), Glühwürmchen (59), 02.11.2026
+
+Fünf Effekte zum Entspannen, Meditieren und Einschlafen von Claude Opus 5.5 (Anthropic), `CalmEffects.h`,
+nur in der LED-Webseite und der Android-App (Touchdisplay weiterhin 1–45). Keine Einstellregler; die
+Helligkeit folgt dem Regler. Alle Übergänge weich (kein Blitzen, kein Zufall, 3 s Einblenden).
+
+| ID | Name | Verhalten |
+|---|---|---|
+| 55 | Atemfluss | Atembegleiter mit 6 Atemzügen pro Minute: 4 s einatmen (Licht wächst von der Mitte bis an die Enden, Lavendel → Türkis), 1 s halten (warmer Kern), 5 s ausatmen (zieht sich zusammen). Mikrofon ohne Einfluss. |
+| 56 | Klangschale (A) | Ein Anschlag oder ein deutlich anschwellender Klang schickt einen sehr langsamen Ring (7 s, Gold/Violett/Türkis/Rosé im Wechsel) von der Mitte nach außen, weich angeschlagen (0,6 s) und lang ausklingend; mindestens 2,5 s Abstand. Der indigofarbene Grundton folgt träge (2,5 s) der Lautstärke. In Stille schlägt die Schale alle 16 s von selbst leise an. Für Meditationsmusik gedacht, auch ohne deutliche Beats. |
+| 57 | Mondsee (A) | Dunkles, langsam bewegtes Wasser mit silbernem Mond-Spiegelbild, das glitzert und in 3 min leicht hin und her wandert. Musik (über 1,5 s geglättet, keine Beats) macht das Spiegelbild bis gut doppelt so breit und golden-warm, das Glitzern bis etwa 4-mal so hell und die Wellen bis 2,5-mal so schnell; schon leise Musik ist sichtbar (wurzelartige Kurve). Nach der Musik gleitet alles in wenigen Sekunden zurück. Verstärkt 02.11. abends auf Sammys Wunsch (vorher kaum zu sehen). |
+| 58 | Einschlafen | Abendrot (Bernstein) wird in 30 min über Rosenrot zu Glut, atmet dabei langsamer (7,5 → gut 4 Züge/min) und geht dann ganz aus. Kein Blauanteil. Der 30-min-Lauf beginnt bei jeder Auswahl und nach einem Neustart des Controllers neu; danach bleibt der Effekt gewählt, aber dunkel. |
+| 59 | Glühwürmchen | Sehr dunkles Nachtlicht: wenige gelbgrüne Punkte (2 + 1 je 30 LEDs, höchstens 20) glimmen an wechselnden Stellen auf, treiben ein wenig und verlöschen; dazwischen ganz dunkel (Spitze etwa 95/255 vor dem Regler). |
+
+58 und 59 runden fein mit fester Schwelle je LED; das zeitliche FastLED-Dithering ist dafür wie bei 41/53 aus.
+
+Prüfung: `tools/test_calm_effects.py` (0..600 LEDs, Ränder, millis()-Überlauf, Bildsprünge, Atemrhythmus,
+Anschlagabstand in Stille/bei 120 BPM, Mondsee mit lauter/leiser Musik (+59 %/+28 % Licht, deutlich wärmer, ohne Sprung zurück), Mikrofonunabhängigkeit von 55/58/59, stetiges Abdunkeln ohne Blau bis
+ganz aus nach 30 min, Dispatcher) schreibt Zeit-Ort-Vorschauen nach `Temp/Led-Ruhe-PC/`. Nur PC-Simulation;
+nicht gebaut, kein Gerätetest. Wie die Klangschale auf echte Meditationsmusik am Mikrofon reagiert, ist offen.
+
 ## Türzeichen: Ruhe (53) und ChatGPT Tür + Musik (54), 30.10.2026
 
 Von Claude Opus 5.5 (Anthropic), `DoorScenes.h`, nur in der LED-Webseite. Reagieren auf die UDP-Meldungen
@@ -8,14 +66,14 @@ offen/zu einer Tür mit eingeschaltetem „Türlicht“ (Tür über LED 335–37
 | 53 | Ruhe mit Türzeichen | Sehr dunkles, langsam atmendes Blau-Violett (höchstens 20/255) zum Schlafen/Meditieren. Tür auf: goldene Welle von der Tür über den ganzen Schlauch, danach glüht der Türbereich, solange sie offen ist; nach „zu“ klingt es in 3 s aus. Rechnet die Helligkeit selbst in 1/256-Stufen bei voller Treiberstufe (Regler wird eingerechnet, Ausgangsgrenze bleibt); jede LED rundet an eigener fester Schwelle, damit das Atmen gleitet statt im Sekundentakt zu springen. |
 | 54 | ChatGPT Tür + Musik | ChatGPT (36) mit Musik plus dieselbe Begrüßungswelle und Türglühen; solange die Tür offen ist, starten Beats als Mint-Wellen an der Tür. Schickt etwa 30-mal pro Sekunde Lautstärke und Beat-Zähler direkt an die Tür; deren Streifen zeigt im Stillstand ChatGPT im Takt (2 s ohne Paket: eigener Effekt). |
 
-**Alle anderen Effekte (1–52):** Dieselbe goldene Begrüßungswelle und das Türglühen liegen über jedem laufenden
+**Alle anderen Effekte (1–52, 55–65):** Dieselbe goldene Begrüßungswelle und das Türglühen liegen über jedem laufenden
 Effekt (außer „Alles AUS“, dort gilt das Türlicht). `Led.ino` zeichnet sie nur auf eine Kopie fürs Anzeigen, damit
 Effekte mit Nachleuchten das Gold nicht aufsummieren; die Helligkeit folgt dem Regler.
 
 Prüfung: `tools/test_door_light.py` (PC). Kein Hardware- oder Funknachweis.
 
 Auf der LED-Webseite tragen Effekte, die das Mikrofon auswerten, ein orangefarbenes „A“ (10–19, 21–25, 31–36,
-39, 44, 50, 51, 54); die Namen bleiben wegen des Touchdisplays unverändert.
+39, 44, 50, 51, 54, 56, 57, 63–65); die Namen bleiben wegen des Touchdisplays unverändert.
 
 ## Opus Resonanz (50), Opus Puls (51), Opus Polarlicht (52), 30.10.2026
 

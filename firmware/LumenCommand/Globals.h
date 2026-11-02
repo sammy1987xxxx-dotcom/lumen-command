@@ -39,6 +39,8 @@ extern uint8_t brightness;
 extern CRGB currentColor;
 extern byte currentEffect;
 extern byte gHue;
+// Einzel-LEDs von Hand gemalt (Effekt 0, nicht gespeichert): kein „Alles AUS“, kein Neufüllen.
+extern bool ledsPainted;
 
 extern SemaphoreHandle_t xMutex;
 

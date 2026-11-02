@@ -10,6 +10,9 @@
 #include "GoldVariants.h"
 #include "HueDrift.h"
 #include "OpusEffects.h"
+#include "CalmEffects.h"
+#include "LedSlots.h"
+#include "MusicScenes.h"
 
 int goldSpeed = 80;
 int goldPause = 2500;
@@ -164,6 +167,8 @@ void sinelonBeatDrop() { renderStudio(35); }
 
 // Türzeichen für 53/54; die Meldungen setzt der Render-Loop in Led.ino.
 door_scene::Signal doorSignal;
+// Bilderlicht 60-62; Laden/Speichern in Persistence.cpp, Malen und Sichern in WifiControl.cpp.
+LedSlot ledSlots[LED_SLOT_COUNT];
 
 // --- DISPATCHER ---
 void runCurrentEffect() {
@@ -178,6 +183,8 @@ void runCurrentEffect() {
     static hue_drift::Clock chatGptHue;
     static opus_effect::Renderer opusScene;
     static door_scene::Renderer doorScene;
+    static calm_effects::Renderer calmScene;
+    static music_scenes::Renderer musicScene;
     if (currentEffect != previousEffect) {
       studio.reset(millis());
       if (currentEffect == 44 || currentEffect == 45) claudeScene.reset(millis());
@@ -193,6 +200,8 @@ void runCurrentEffect() {
       if (currentEffect >= 50 && currentEffect <= 52) opusScene.reset(millis());
       if (currentEffect == 53 || currentEffect == 54) doorScene.reset(millis());
       if (currentEffect == 54) chatGpt.reset(millis());
+      if (currentEffect >= 55 && currentEffect <= 59) calmScene.reset(millis());
+      if (currentEffect >= 63 && currentEffect <= 65) musicScene.reset(millis());
     }
     switch(currentEffect) {
       case 1: rainbow(); break;
@@ -273,6 +282,15 @@ void runCurrentEffect() {
         doorScene.overlayMusic(leds, shown, millis(), doorSignal, beatDetected, loud);
         break;
       }
+      case 55: case 56: case 57: case 58: case 59:
+        calmScene.render(leds, numLeds > MAX_LEDS ? MAX_LEDS : numLeds, millis(),
+                         currentEffect - 55, constrain(smoothedLoudness, 0, 255), beatDetected); break;
+      case 63: case 64: case 65:
+        musicScene.render(leds, numLeds > MAX_LEDS ? MAX_LEDS : numLeds, millis(),
+                          currentEffect - 63, constrain(smoothedLoudness, 0, 255), beatDetected); break;
+      case 60: case 61: case 62:
+        showLedSlot(ledSlots[currentEffect - LED_SLOT_FIRST_EFFECT], leds,
+                    numLeds > MAX_LEDS ? MAX_LEDS : numLeds); break;
       case 40: case 41: case 42:
         quietScenes.render(leds, numLeds > MAX_LEDS ? MAX_LEDS : numLeds,
                               millis(), currentEffect-40); break;

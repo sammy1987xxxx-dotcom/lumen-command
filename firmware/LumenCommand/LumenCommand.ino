@@ -21,6 +21,7 @@ uint8_t brightness = 96;
 CRGB currentColor = CRGB::Red;
 byte currentEffect = 0;
 byte gHue = 0;
+bool ledsPainted = false;
 uint8_t doorLightRequest = 0;
 door_light::Renderer doorLight;
 uint8_t doorLightLevel = door_light::NIGHT_LEVEL;
@@ -58,7 +59,7 @@ void loop() {
   if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
     // Türlicht nur bei „Alles AUS“ (feste Farbe Schwarz); jede andere Wahl beendet es sofort.
     const uint32_t now = millis();
-    const bool allOff = currentEffect == 0 && !(currentColor.r | currentColor.g | currentColor.b);
+    const bool allOff = currentEffect == 0 && !ledsPainted && !(currentColor.r | currentColor.g | currentColor.b);
     // Türlicht abgeschaltet: neue Meldungen verwerfen, Laufendes ruhig ausgehen lassen.
     if (!doorLightEnabled) {
       doorLightRequest = 0;
@@ -102,9 +103,10 @@ void loop() {
     if (wantOwnLevel) FastLED.setBrightness(limitLedOutput(255));
     else if (ownLevel) FastLED.setBrightness(limitLedOutput(brightness));
     ownLevel = wantOwnLevel;
-    // Nachtglut (41) und Ruhe (53) runden selbst fest je LED; das zeitliche FastLED-Dithering
-    // wuerde bei so kleinen Werten sichtbar zappeln.
-    FastLED.setDither(currentEffect == 41 || currentEffect == 53 ? DISABLE_DITHER : BINARY_DITHER);
+    // Nachtglut (41), Ruhe (53), Einschlafen (58) und Gluehwuermchen (59) runden selbst fest je
+    // LED; das zeitliche FastLED-Dithering wuerde bei so kleinen Werten sichtbar zappeln.
+    const bool ownDither = currentEffect == 41 || currentEffect == 53 || currentEffect == 58 || currentEffect == 59;
+    FastLED.setDither(ownDither ? DISABLE_DITHER : BINARY_DITHER);
     // LED-Anzahl im Betrieb geaendert: Die Ausgabe kannte bisher nur den Startwert.
     // Beim Verkleinern zuerst die ueberzaehligen LEDs schwarz senden, sonst behalten
     // sie ihre letzte Farbe.

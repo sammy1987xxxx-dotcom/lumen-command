@@ -107,6 +107,7 @@ background-color: #555; border-radius: 4px; cursor: pointer; transition: transfo
     .led-box.shown { outline: 2px solid #fff; background-color: #fff; color: #000; text-shadow: none; }
     .led-show { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .led-show input { width: 5em; }
+    .slot-state { font-size: 0.85em; color: #bbb; }
     .led-box:hover { transform: scale(1.2);
 }
     .form-footer { grid-column: 1 / -1; text-align: center; margin-top: 10px;
@@ -199,6 +200,14 @@ data-effect-id="18">Audio-Explosion</button>
       <button class="button effect-btn" data-effect-id="52">Opus Polarlicht</button>
       <button class="button effect-btn" data-effect-id="53">Ruhe mit Türzeichen</button>
       <button class="button effect-btn audio" title="Reagiert auf Musik (Mikrofon)" data-effect-id="54">ChatGPT Tür + Musik</button>
+      <button class="button effect-btn" title="Atembegleiter: 4 s ein, 1 s halten, 5 s aus" data-effect-id="55">Atemfluss</button>
+      <button class="button effect-btn audio" title="Reagiert sanft auf Musik (Mikrofon)" data-effect-id="56">Klangschale</button>
+      <button class="button effect-btn audio" title="Reagiert sanft auf Musik (Mikrofon)" data-effect-id="57">Mondsee</button>
+      <button class="button effect-btn" title="Abendrot, in 30 Minuten ganz dunkel" data-effect-id="58">Einschlafen</button>
+      <button class="button effect-btn" title="Sehr dunkles Nachtlicht" data-effect-id="59">Glühwürmchen</button>
+      <button class="button effect-btn audio" title="Nur mit Musik, bei Stille dunkel" data-effect-id="63">Nachtblüte</button>
+      <button class="button effect-btn audio" title="Nur mit Musik, bei Stille dunkel" data-effect-id="64">Klangpolarlicht</button>
+      <button class="button effect-btn audio" title="Nur mit Musik, bei Stille dunkel" data-effect-id="65">Lichttanz</button>
       <button class="button" onclick="setSolidColor('000000')" style="background-color:#c9302c;">Alles AUS</button>
     </div>
   </div>
@@ -410,6 +419,20 @@ id="audiofireworks-settings" class="effect-settings"><div class="settings-form">
         <button class="button" id="showLedBtn" type="button">Zeigen</button>
       </div>
       <p style="font-size:0.9em;color:#bbb;grid-column: 1 / -1;">Nummer 1 ist die erste LED am Anschluss. „Zeigen“ schaltet nur diese LED weiß und alle anderen aus (Helligkeit wie eingestellt). Der vorige Effekt wird nicht überschrieben gespeichert. Mit gedrückter Umschalttaste im Raster klicken zeigt die angeklickte LED.</p>
+      <label for="paintFrom">Bereich färben:</label>
+      <div class="led-show">
+        <input type="number" id="paintFrom" min="1" value="1"> bis
+        <input type="number" id="paintTo" min="1" value="1">
+        <button class="button" id="paintRangeBtn" type="button">Färben</button>
+        <button class="button" id="paintClearBtn" type="button">Alle schwarz</button>
+      </div>
+      <label>Bilderlicht:</label>
+      <div>
+        <div class="led-show"><button class="button effect-btn" data-effect-id="60">Bilderlicht 1</button><button class="button slot-save" type="button" data-slot="1">Speichern</button><span class="slot-state" id="slotState1"></span></div>
+        <div class="led-show"><button class="button effect-btn" data-effect-id="61">Bilderlicht 2</button><button class="button slot-save" type="button" data-slot="2">Speichern</button><span class="slot-state" id="slotState2"></span></div>
+        <div class="led-show"><button class="button effect-btn" data-effect-id="62">Bilderlicht 3</button><button class="button slot-save" type="button" data-slot="3">Speichern</button><span class="slot-state" id="slotState3"></span></div>
+      </div>
+      <p style="font-size:0.9em;color:#bbb;grid-column: 1 / -1;">Bilderlicht: „Malfarbe“ wählen, LEDs im Raster anklicken oder einen Bereich färben (Nummern wie im Raster). „Speichern“ merkt sich alle LEDs auf dem Platz – auch nach einem Neustart – und schaltet ihn ein; nicht gemalte LEDs bleiben aus, der Helligkeitsregler wirkt. Ändern: Platz aufrufen (das Raster zeigt dann seine Farben), nachmalen, wieder speichern.</p>
     </div>
     <div id="led-grid" class="led-grid"></div>
   </div>
@@ -596,6 +619,7 @@ ledBox.className = 'led-box';
       ledGrid.appendChild(ledBox);
     }
     document.getElementById('showLedNr').max = ledCount;
+    ['paintFrom', 'paintTo'].forEach(id => { document.getElementById(id).max = ledCount; });
   }
 
   // LED-Nummern sind 1-basiert, /showled erwartet wie /setled den 0-basierten Index.
@@ -623,6 +647,41 @@ ledBox.className = 'led-box';
   document.getElementById('showLedPrev').addEventListener('click', () => showLed((parseInt(document.getElementById('showLedNr').value, 10) || 1) - 1));
   document.getElementById('showLedNext').addEventListener('click', () => showLed((parseInt(document.getElementById('showLedNr').value, 10) || 0) + 1));
   document.getElementById('showLedNr').addEventListener('keydown', (e) => { if (e.key === 'Enter') showLed(e.target.value); });
+
+  // Bilderlicht: Bereich färben (1-basiert wie das Raster), Plätze speichern, gespeicherte Farben ins Raster.
+  let slotCounts = [0, 0, 0], gridSlot = 0;
+  function paintRange(first, last, hex) {
+    const count = ledGrid.children.length;
+    if (!count) return;
+    first = Math.min(Math.max(parseInt(first, 10) || 1, 1), count);
+    last = Math.min(Math.max(parseInt(last, 10) || 1, 1), count);
+    if (first > last) [first, last] = [last, first];
+    for (let i = first - 1; i < last; ++i) {
+      ledGrid.children[i].classList.toggle('shown', false);
+      ledGrid.children[i].style.backgroundColor = '#' + hex;
+    }
+    sendRequest(`/setled?from=${first - 1}&to=${last - 1}&color=${hex}`);
+  }
+  function showSlotInGrid(slot) {
+    gridSlot = slot;
+    return queuedRequest(`/slotcolors?slot=${slot}`, response => response.text()).then(text => {
+      Array.from(ledGrid.children).forEach((box, i) => {
+        const hex = text.substr(i * 6, 6);
+        box.classList.toggle('shown', false);
+        box.style.backgroundColor = '#' + (hex.length === 6 ? hex : '000000');
+      });
+    }).catch(() => { gridSlot = 0; });
+  }
+  document.getElementById('paintRangeBtn').addEventListener('click', () => paintRange(
+    document.getElementById('paintFrom').value, document.getElementById('paintTo').value,
+    document.getElementById('singleLedColor').value.substring(1)));
+  document.getElementById('paintClearBtn').addEventListener('click', () => paintRange(1, ledGrid.children.length, '000000'));
+  document.querySelectorAll('.slot-save').forEach(btn => btn.addEventListener('click', () => {
+    const slot = Number(btn.dataset.slot);
+    if (slotCounts[slot - 1] && !confirm(`Bilderlicht ${slot} überschreiben?`)) return;
+    gridSlot = 0;
+    sendRequest(`/saveslot?slot=${slot}`);
+  }));
 
   ledGrid.addEventListener('click', (e) => {
     if (e.target.classList.contains('led-box') && e.shiftKey) {
@@ -691,9 +750,20 @@ starTrekBtn.style.backgroundColor = data.starTrekColorCycle ? '#2ecc71' : '#00bc
         document.querySelectorAll('.effect-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.effectId == data.activeEffect);
         });
-if (ledGrid.children.length !== data.numLeds) {
+const gridChanged = ledGrid.children.length !== data.numLeds;
+if (gridChanged) {
             generateLedGrid(data.numLeds);
 }
+        if (Array.isArray(data.ledSlots)) {
+            slotCounts = data.ledSlots;
+            slotCounts.forEach((count, i) => {
+                const state = document.getElementById(`slotState${i + 1}`);
+                if (state) state.textContent = count ? 'gespeichert' : 'leer';
+            });
+        }
+        const activeSlot = data.activeEffect >= 60 && data.activeEffect <= 62 ? data.activeEffect - 59 : 0;
+        if (activeSlot && (activeSlot !== gridSlot || gridChanged)) showSlotInGrid(activeSlot);
+        if (!activeSlot) gridSlot = 0;
 
         const solidColorPicker = document.getElementById('solidColorPicker');
 if (activeEl !== solidColorPicker && data.activeEffect === 0) {
