@@ -8,6 +8,9 @@ int micSensitivity = 5;
 int smoothedLoudness = 0;
 bool beatDetected = false;
 long averageLoudness = 0;
+bool remoteMicEnabled = true;
+volatile bool remoteMicActive = false;
+remote_mic::Receiver remoteMic;
 
 // Diagnose
 int currentPeakToPeak = 0;
@@ -51,6 +54,14 @@ void processAudio() {
   float filtered = 0;
   unsigned long startMicros = micros();
 
+  // WLAN-Mikrofon (Würfel): ein frischer Funkpegel ersetzt nur diese Messung. Rauschgrenze,
+  // Automatik, Glättung und Beat-Erkennung darunter bleiben für beide Quellen gleich.
+  remoteMicActive = remoteMicEnabled && remoteMic.fresh(millis());
+  if (remoteMicActive) {
+      const int level = remoteMic.level;
+      signalMin = rawMin = 0;
+      signalMax = rawMax = level;
+  } else
   for (uint16_t i = 0; i < windowSamples; i++) {
       while (micros() - startMicros < (unsigned long)i * AUDIO_RAW_INTERVAL_US) {}
       int sample = analogRead(MIC_PIN_AO);

@@ -2,6 +2,7 @@
 #define AUDIO_H
 
 #include <Arduino.h>
+#include "RemoteMic.h"
 
 // --- AUDIO VARIABLEN (Extern) ---
 extern int audioNoiseFloor;   // Automatik: aktuelle Rauschgrenze
@@ -10,6 +11,11 @@ extern int micSensitivity;    // 1 = nur laute Musik ... 10 = sehr empfindlich
 extern int smoothedLoudness;
 extern bool beatDetected;
 extern long averageLoudness;
+
+// --- WLAN-MIKROFON (Würfel) ---
+extern bool remoteMicEnabled;            // gespeichert, Standard an
+extern volatile bool remoteMicActive;    // frischer Würfelpegel ersetzt gerade das eigene Mikrofon
+extern remote_mic::Receiver remoteMic;
 
 // --- DIAGNOSE VARIABLEN ---
 extern int currentPeakToPeak;

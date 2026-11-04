@@ -237,7 +237,8 @@
 "   if (!Number.isInteger(data.activeEffect)) { stale(); return; }\n" \
 "   state = 'Effekt ' + data.activeEffect;\n" \
 "   value = state;\n" \
-"   const color = data.activeEffect === 0 && Number.isInteger(data.solidColor) && data.solidColor >= 0 && data.solidColor <= 0xffffff ? '#' + data.solidColor.toString(16).padStart(6,'0') : '#7895a3';\n" \
+"   // LED-Firmware meldet 0xFFRRGGBB (FastLED mit Alpha, LED-COLOR-01); nur die Farbe zeigen.\n" \
+"   const color = data.activeEffect === 0 && Number.isInteger(data.solidColor) && data.solidColor >= 0 && data.solidColor <= 0xffffffff ? '#' + (data.solidColor % 0x1000000).toString(16).padStart(6,'0') : '#7895a3';\n" \
 "   view.style.setProperty('--cc-led-color',color);\n" \
 "  }\n" \
 "  view.dataset.fresh = 'true';\n" \

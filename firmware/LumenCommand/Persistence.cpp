@@ -31,6 +31,7 @@ struct SettingsCache {
     uint32_t doorFirst;
     uint32_t doorLast;
     bool doorLightEnabled;
+    bool remoteMicEnabled;
 
     int32_t rainbowSpeed;
     int32_t rainbowGap;
@@ -154,6 +155,7 @@ void saveSettingsInternal() {
     updateUInt("doorFirst", door_light::doorRange().first, lastSaved.doorFirst);
     updateUInt("doorLast", door_light::doorRange().last, lastSaved.doorLast);
     updateBool("doorLightOn", doorLightEnabled, lastSaved.doorLightEnabled);
+    updateBool("remoteMic", remoteMicEnabled, lastSaved.remoteMicEnabled);
 
     updateInt("rainbowSpeed", rainbowSpeed, lastSaved.rainbowSpeed);
     updateInt("rainbowGap", rainbowGap, lastSaved.rainbowGap);
@@ -286,6 +288,8 @@ void loadSettings() {
   lastSaved.doorLast = door.last;
   doorLightEnabled = preferences.getBool("doorLightOn", doorLightEnabled);
   lastSaved.doorLightEnabled = doorLightEnabled;
+  remoteMicEnabled = preferences.getBool("remoteMic", remoteMicEnabled);
+  lastSaved.remoteMicEnabled = remoteMicEnabled;
 
   rainbowSpeed = preferences.getInt("rainbowSpeed", rainbowSpeed);
   lastSaved.rainbowSpeed = rainbowSpeed;

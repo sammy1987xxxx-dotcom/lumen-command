@@ -18,6 +18,7 @@ static device_access::Credentials ledAccess;
 TaskHandle_t WebServerTask;
 // Türlicht: Türen senden „door_light“ auf demselben Port wie ihre Heartbeats.
 static WiFiUDP doorLightUdp;
+static WiFiUDP remoteMicUdp;
 static const uint16_t DOOR_LIGHT_PORT = 4210;
 // Effekt 54: Musik an die Tür, die zuletzt „door_light“ gemeldet hat (nur Türen mit Schalter).
 static IPAddress musicDoorIp;
@@ -50,6 +51,8 @@ void handleStatus() {
     json["doorLightLevel"] = doorLightLevel;
     json["doorSignalLevel"] = doorSignalLevel;
     json["doorLightEnabled"] = doorLightEnabled;
+    json["remoteMicEnabled"] = remoteMicEnabled;
+    json["remoteMicActive"] = remoteMicActive;
     json["doorFirst"] = door_light::doorRange().first + 1;  // 1-basiert wie die Webseite
     json["doorLast"] = door_light::doorRange().last + 1;
     json["solidColor"] = (uint32_t)currentColor;
@@ -149,6 +152,7 @@ void handleToggleParam() {
       if (param == "starTrekColor") starTrekColorCycle = !starTrekColorCycle;
       if (param == "beatRippleColor") beatRippleColorCycle = !beatRippleColorCycle;
       if (param == "doorLight") doorLightEnabled = !doorLightEnabled;
+      if (param == "remoteMic") remoteMicEnabled = !remoteMicEnabled;
     }
     saveSettings();
     xSemaphoreGive(xMutex);
@@ -479,6 +483,17 @@ void pollDoorLight() {
   Serial.printf("Türlicht: %s meldet %s\n", (const char *)(doc["name"] | "?"), state);
 }
 
+// WLAN-Mikrofon: alle wartenden Pegel lesen, nur der neueste zählt. Auch bei abgeschaltetem
+// Würfel-Mikrofon lesen, damit sich keine alten Pakete stauen.
+void pollRemoteMic() {
+  for (uint8_t i = 0; i < 8 && remoteMicUdp.parsePacket() > 0; i++) {
+    uint8_t packet[remote_mic::PACKET_SIZE + 1];
+    const int len = remoteMicUdp.read(packet, sizeof(packet));
+    uint16_t level;
+    if (len > 0 && remote_mic::parse(packet, size_t(len), level)) remoteMic.accept(level, millis());
+  }
+}
+
 // Effekt 54: etwa 30-mal pro Sekunde Lautstärke und Beat-Zähler direkt an die Tür.
 // Der Zähler statt eines Beat-Flags übersteht verlorene Pakete; die Tür erkennt die Änderung.
 void sendDoorMusic() {
@@ -500,6 +515,7 @@ void webServerTask(void *pvParameters) {
   for (;;) {
     server.handleClient();
     pollDoorLight();
+    pollRemoteMic();
     sendDoorMusic();
     delay(2);
   }
@@ -627,6 +643,7 @@ void setupNetwork() {
 
   server.begin();
   doorLightUdp.begin(DOOR_LIGHT_PORT);
+  remoteMicUdp.begin(remote_mic::PORT);
 
   xTaskCreatePinnedToCore(
       webServerTask,

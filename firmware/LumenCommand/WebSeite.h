@@ -265,7 +265,11 @@ data-effect-id="18">Audio-Explosion</button>
         <div class="settings-form">
           <label for="micSensitivity">Empfindlichkeit (1 = nur laute Musik, 10 = sehr empfindlich):</label><div class="slider-container"><input type="range" min="1" max="10" class="slider" id="micSensitivity"><span id="micSensitivityValue" class="slider-value">...</span></div>
         </div>
-        <p style="font-size:0.9em;color:#bbb;text-align:center;">Mikrofon hört gerade: <span id="livePeak" style="color:#00bcd4">...</span> (Stille etwa 10–20). Die Automatik regelt die Lautstärke selbst nach.</p>
+        <div class="settings-form">
+          <label for="remoteMicBtn">Würfel als WLAN-Mikrofon (am Würfel dreimal drücken):</label>
+          <div><button class="button" id="remoteMicBtn" type="button">Würfel-Mikrofon ERLAUBT</button></div>
+        </div>
+        <p style="font-size:0.9em;color:#bbb;text-align:center;">Quelle: <span id="micSource" style="color:#00bcd4">...</span> · Mikrofon hört gerade: <span id="livePeak" style="color:#00bcd4">...</span> (Stille etwa 10–20). Die Automatik regelt die Lautstärke selbst nach.</p>
       </div>
       </div>
 
@@ -636,6 +640,7 @@ ledBox.className = 'led-box';
     sendRequest(`/showled?index=${nr - 1}`);
   }
   document.getElementById('doorLightBtn').addEventListener('click', () => sendRequest('/toggleparam?param=doorLight'));
+  document.getElementById('remoteMicBtn').addEventListener('click', () => sendRequest('/toggleparam?param=remoteMic'));
   // Türbereich: Eingaben erst nach „Übernehmen“ wieder vom Gerät überschreiben lassen.
   const doorInputs = ['doorFirstInput', 'doorLastInput'].map(id => document.getElementById(id));
   doorInputs.forEach(input => input.addEventListener('input', () => { input.dataset.edited = '1'; }));
@@ -742,6 +747,11 @@ starTrekBtn.style.backgroundColor = data.starTrekColorCycle ? '#2ecc71' : '#00bc
         const beatRippleBtn = document.getElementById('beatRippleColorCycleBtn');
         beatRippleBtn.textContent = 'Farbwechsel ' + (data.beatRippleColorCycle ? 'AN' : 'AUS');
         beatRippleBtn.style.backgroundColor = data.beatRippleColorCycle ? '#2ecc71' : '#00bcd4';
+
+        const remoteMicBtn = document.getElementById('remoteMicBtn');
+        remoteMicBtn.textContent = 'Würfel-Mikrofon ' + (data.remoteMicEnabled ? 'ERLAUBT' : 'AUS');
+        remoteMicBtn.style.backgroundColor = data.remoteMicEnabled ? '#2ecc71' : '#00bcd4';
+        document.getElementById('micSource').textContent = data.remoteMicActive ? 'Würfel (WLAN)' : 'eingebaut';
 
         if(document.getElementById('livePeak')) {
              document.getElementById('livePeak').textContent = data.currentPeakToPeak;

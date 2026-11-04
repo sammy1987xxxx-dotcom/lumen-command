@@ -72,19 +72,27 @@ public:
         if (ok) { user=nextUser; pass=nextPassword; rotate(); }
         return ok;
     }
+    // Seite in Stuecken senden: Der Command-Center-Kopf (~38 KB) geht direkt aus dem Flash.
+    // Frueher entstanden davon zwei bis drei Kopien im RAM; beim LED-Schlauch fehlte dafuer
+    // ein zusammenhaengender Block und der ESP stuerzte beim Oeffnen ab (LED-ACCESS-01).
     void page(WebServer &server) const {
         if (!authorize(server)) return;
-        const std::string html=std::string("<!doctype html><html lang='de'><meta charset='utf-8'>")+
-            "<meta name='viewport' content='width=device-width,initial-scale=1'><title>Zugangsdaten</title>"
-            COMMAND_CENTER_HEAD
-            "<body class='cc-theme'><main style='max-width:36rem;margin:2rem auto;padding:1rem'>"
+        static const char start[]="<!doctype html><html lang='de'><meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width,initial-scale=1'><title>Zugangsdaten</title>";
+        const std::string form=std::string("<body class='cc-theme'><main style='max-width:36rem;margin:2rem auto;padding:1rem'>"
             "<h1>Zugangsdaten</h1><form method='post' action='/access'>"
-            "<input type='hidden' name='access_token' value='"+session+"'>"
+            "<input type='hidden' name='access_token' value='")+session+"'>"
             "<label>Neuer Benutzername<input name='username' required maxlength='64' autocomplete='username'></label>"
             "<label>Neues Passwort (8 bis 63 Zeichen)<input name='password' type='password' required minlength='8' maxlength='63' autocomplete='new-password'></label>"
             "<label>Passwort wiederholen<input name='confirmation' type='password' required autocomplete='new-password'></label>"
             "<button>Speichern</button></form><p>Nach dem Speichern neu anmelden. Das Setup-WLAN verwendet das neue Passwort beim nächsten Start.</p><a href='/'>Zurück</a></main></body></html>";
-        server.sendHeader("Cache-Control","no-store"); server.send(200,"text/html; charset=utf-8",html.c_str());
+        server.sendHeader("Cache-Control","no-store");
+        server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+        server.send(200,"text/html; charset=utf-8","");
+        server.sendContent(start,sizeof start-1);
+        server.sendContent_P(COMMAND_CENTER_HEAD);
+        server.sendContent(form.c_str(),form.size());
+        server.sendContent("",0);
     }
     bool change(WebServer &server,bool safe=true) {
         if (!authorize(server)) return false;
